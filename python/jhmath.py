@@ -36,7 +36,7 @@ def linefit_same_step(y):
 
 
 def _default_weight_func(offset):
-    if offset <= -3 or offset >= 3:
+    if offset <= -5 or offset >= 5:
         return 0
     elif offset == 0:
         return 2
