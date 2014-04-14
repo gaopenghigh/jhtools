@@ -18,10 +18,18 @@ def test_Jhdb():
     print(rets)
     for r in rets:
         print r['varz']
-    print(db.get_by_conditions('clusters', {'varz':'test:test'}))
+    print(db.get('clusters', {'varz':'test:test'}))
+    print(db.get('clusters', {'id':3}))
+    print(db.update('clusters', {'id':3}, {'varz':'abcdefg'}))
+    print(db.get('clusters', {'id':3}))
+    print(db.insert('clusters', {'name':'testname', 'varz':'haha'}))
+    print(db.get('clusters'))
+    print(db.delete('clusters', {'name':'testname', 'varz':'haha'}))
+    print(db.get('clusters'))
+
 
 def query_func(dbpool, name):
-    ret = dbpool.get_by_conditions('clusters', {'varz':'test:test'})
+    ret = dbpool.get('clusters', {'varz':'test:test'})
     print('%s, resul = %s, sleep 5s' % (name, ret))
     time.sleep(5)
 
@@ -44,7 +52,7 @@ def test_JhdbPool():
 
 if __name__ == '__main__':
     test_Jhdb()
-    test_JhdbPool()
+#    test_JhdbPool()
 
 
 

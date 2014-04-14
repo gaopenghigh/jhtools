@@ -16,54 +16,85 @@ class JhdbExcutor:
     def __init__(self, cursor):
         self.cursor = cursor
 
-    def _execute(self, sql):
+    def _execute(self, sql, values=[]):
+        print('SQL = %s' % sql)
+        print('values = %s' % values)
         try:
-            self.cursor.execute(sql)
+            self.cursor.execute(sql, values)
         except Exception, e:
             raise JhdbError("execute sql error: %s, sql = %s" % (str(e), sql))
 
-    def select(self, sql):
+    def select(self, sql, values=[]):
         ''' return a List of Dict : [{},{},...{}] '''
         ret = []
-        self._execute(sql)
+        self._execute(sql, values)
         cols = self.cursor.column_names
         map(lambda x:ret.append(dict(zip(cols, x))), self.cursor.fetchall())
         return ret
 
-    def update(self, sql):
+    def run(self, sql, values=[]):
         ''' return True or False '''
         try:
-            self._execute(sql)
+            self._execute(sql, values)
         except JhdbError, e:
             print(e)
             return False
         return True
 
-    def insert(self, sql):
-        return self.update(sql)
+    def update(self, table, conditions, data):
+        sql_start = "UPDATE `%s` SET " % table
+        values, sql_update, sql_where = [], [], []
+        for k, v in data.items():
+            sql_update.append("`{0}` = %s".format(k))
+            values.append(v)
+        sql_update = ', '.join(sql_update)
+        for k, v in conditions.items():
+            sql_where.append("`{0}` = %s".format(k))
+            values.append(v)
+        sql_where = ' WHERE ' + ' AND '.join(sql_where)
+        sql = sql_start + sql_update + sql_where
+        return self.run(sql, values)
 
-    def delete(self, sql):
-        return self.update(sql)
+    def insert(self, table, data):
+        sql= "INSERT INTO `%s` (%s) VALUES (%s)"
+        values, sql_cols, sql_vals = [], [], []
+        for k, v in data.items():
+            sql_cols.append('`%s`' % k)
+            sql_vals.append('%s')
+            values.append(v)
+        sql_cols = ', '.join(sql_cols)
+        sql_vals = ', '.join(sql_vals)
+        sql = sql % (table, sql_cols, sql_vals)
+        return self.run(sql, values)
 
-    def delete_by_field(self, table, field, v):
-        sql = "DELETE FROM %s WHERE `%s` = '%s'" % (table, field, v)
-        return self.delete(sql)
+    def delete(self, table, conditions):
+        ''' conditons cannot be {} to prevent mistaken deleting '''
+        values, sql_where = [], []
+        sql_start = "DELETE FROM `%s` WHERE " % table
+        for k, v in conditions.items():
+            sql_where.append("`{0}` = %s".format(k))
+            values.append(v)
+        sql_where = ' AND '.join(sql_where)
+        sql = sql_start + sql_where
+        return self.run(sql, values)
 
-    def update_field(self, table, condition_k, condition_v, field, v):
-        sql = "UPDATE %s SET `%s` = '%s' WHERE `%s` = '%s'" % (
-                table, field, v, condition_k, condition_v)
-        return self.update(sql)
-
-    def get_by_conditions(self, table, conditions, orderby=None, limit=None):
+    def get(self, table, conditions={}, orderby=None, limit=None):
         ''' conditions is a dict of {condition_filed:condition_value} '''
-        parsed_conditions = ' AND '.join(
-                ["`%s` = '%s'" % (k,v) for k,v in conditions.items()])
-        sql = "SELECT * FROM %s WHERE %s" % (table, parsed_conditions)
+        values = []
+        if not conditions:
+            sql = "SELECT * FROM %s" % table
+        else:
+            parsed_conditions = []
+            for k, v in conditions.items():
+                parsed_conditions.append('`{0}` = %s'.format(k))
+                values.append(v)
+            parsed_conditions = ' AND '.join(parsed_conditions)
+            sql = "SELECT * FROM `%s` WHERE %s" % (table, parsed_conditions)
         if orderby is not None:
             sql = "%s ORDER BY `%s`" % (sql, orderby)
         if limit is not None:
             sql = "%s LIMIT %s" % (sql, limit)
-        return self.select(sql)
+        return self.select(sql, values)
 
 
 class JhdbPool:
@@ -106,33 +137,24 @@ class JhdbPool:
             return ret
         return _wrapper
 
-
     @pool_method
-    def select(self, sql):
+    def select(self, sql, values):
         pass
 
     @pool_method
-    def update(self, sql):
+    def update(self, table, conditions, data):
         pass
 
     @pool_method
-    def insert(self, sql):
+    def insert(self, table, data):
         pass
 
     @pool_method
-    def delete(self, sql):
+    def delete(self, table, conditions):
         pass
 
     @pool_method
-    def delete_by_field(self, table, field, v):
-        pass
-
-    @pool_method
-    def update_field(self, table, condition_k, condition_v, field, v):
-        pass
-
-    @pool_method
-    def get_by_conditions(self, table, conditions, orderby=None, limit=None):
+    def get(self, table, conditions, orderby=None, limit=None):
         pass
 
 

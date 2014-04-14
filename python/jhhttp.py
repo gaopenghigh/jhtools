@@ -127,5 +127,4 @@ def rest_get(url, data=None, headers=None):
 
 def get(url, data=None, headers=None):
     data = None
-    print headers
     return _do_http(url, data, headers, 'GET', 'text')
