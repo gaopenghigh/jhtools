@@ -16,6 +16,7 @@
 " !sort                 对文本进行简单排序：用shift v选中多行文本，输入 !sort
 " r/<Ctrl>+r            撤销/重复
 " </>                   缩进控制
+" set paste             粘贴
 
 " === 移动 ===
 " <Shift> + v           行选择
@@ -57,7 +58,6 @@ map <leader>3 3gt
 map <leader>4 4gt
 map <leader>5 5gt
 
-
 " ====
 " 替换
 " ====
@@ -78,6 +78,7 @@ map <leader>5 5gt
 " 20@a  replay 20遍a中的宏
 
 " vm_1
+
 
 " ========
 " 全局设置
@@ -115,11 +116,15 @@ set ruler           " 显示标尺
 " 外观
 " ====
 
-syntax on
-set background=dark
+"syntax on
+"set background=dark
 
-colorscheme molokai " 最好的颜色主题 https://github.com/tomasr/molokai
+" 最好的颜色主题molokai, https://github.com/tomasr/molokai
+" 注意，有好几个名为molokai的主题，上面tomasr这个最美
+" 最后一定要设置t_Co=256
+colorscheme molokai
 let g:rehash256 = 1
+set t_Co=256                " number of colors
 
 " ====
 " 格式
@@ -131,39 +136,157 @@ set expandtab       " 使用空格代替tab, 输入:re可以把tab替换为空�
 set autoindent      " 自动缩进
 set smartindent     " Smart缩进
 
-" 删除末尾的空格
-func! DeleteTrailingWS()
-  exe "normal mz"
-  %s/\s\+$//ge
-  exe "normal `z"
-endfunc
-autocmd BufWrite *.py,*.rb,*.sh,*.md,*.markdown,*.go :call DeleteTrailingWS()
+"" 列数为80的地方高亮显示
+"if exists('+colorcolumn')
+"    set colorcolumn=80
+"else
+"    au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
+"endif
+"hi ColorColumn guibg=#2d2d2d ctermbg=246
+
+
 
 " ==================
 " 使用Vundle管理插件
 " ==================
 
 " 使用Vundle来管理插件 https://github.com/gmarik/Vundle.vim
+" 首先运行：
 " git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
+" 然后把下面几行写入.vimrc:
 set nocompatible
 filetype off " required!
-set rtp+=~/.vim/bundle/vundle/
+set runtimepath+=~/.vim/bundle/vundle/
 call vundle#rc()
 
-" Use Vundle to Manage Vundle
-Plugin 'gmarik/vundle'
-Plugin 'genutils'
-Plugin 'taglist.vim'
-Plugin 'TaskList.vim'
-Plugin 'django.vim'
-Plugin 'jQuery'
-Plugin 'python.vim'
-Plugin 'Syntastic'
-Plugin 'pyflakes'
-Plugin 'L9'
-Plugin 'FuzzyFinder'
-Plugin 'vim-powerline'
-Plugin 'c.vim'
+" 然后在.vimrc里面设置需要安装的插件
+" 输入:PluginInstall安装插件
 
+Plugin 'gmarik/vundle'      " 使用vundle管理vundle
+
+Plugin 'taglist.vim' "{
+    " 和ctags配合，显示程序的tag
+    " 首先需要安装ctags, ubuntu下安装exuberant-ctags
+    set tags=tags                       " tag文件的名字
+    set tags+=./tags                    " 添加当前目录下的tags文件
+    let Tlist_Ctags_Cmd = '/usr/bin/ctags-exuberant'
+    let Tlist_Show_One_File = 1          "不同时显示多个文件的tag，只显示当前文件的
+    let Tlist_Exit_OnlyWindow = 1        "如果taglist窗口是最后一个窗口，则退出vim
+    let Tlist_Show_One_File=0            "让taglist可以同时展示多个文件的函数列表
+    let Tlist_File_Fold_Auto_Close=1     "非当前文件，函数列表折叠隐藏
+    let Tlist_Use_Right_Window = 1       "在右侧窗口中显示taglist窗口
+    let Tlist_Process_File_Always = 1    "taglist始终解析文件中的tag，不管taglist窗口有没有打开
+    " 用 F9 来打开/关闭taglist页面
+    map <silent> <F9> :TlistToggle<cr>
+    " 按下F4重新生成tag文件，并更新taglist
+    map <F4> :!/usr/bin/ctags-exuberant -R --c++-kinds=+p --fields=+iaS --extra=+q .<CR><CR> 
+                \:TlistUpdate<CR>
+"}
+
+Plugin 'TaskList.vim' "{
+    " 输入:TaskList打开TaskList window
+    " 默认快捷键 <leader>+t
+    " TODO:do something
+    " FIXME:fix something
+"}
+
+Plugin 'Syntastic' "{
+    " Syntastic是强大的语法检查插件
+    " 通过其他专业的检查工具，实现在vim内部检查各种语言的语法
+    " 各种语言的语法检查工具: https://github.com/scrooloose/syntastic/wiki/Syntax-Checkers
+    let g:syntastic_python_checkers = 'pylint'
+"}
+
+Plugin 'L9' "{
+    " 一个vimscript库, 被FuzzyFinder等依赖
+"}
+
+Plugin 'FuzzyFinder' "{
+    " FuzzyFinder 插件，快速查找文件、类和函数等
+    " 依赖ctags生成的tags文件
+    " 查找文件
+    map <leader>f :FufTaggedFile<CR>
+    " 查找tag
+    map <leader>g :FufTag<CR>
+    " 在Buffer中查找文件
+    map <leader>b :FufBuffer<CR>
+"}
+
+Plugin 'vim-powerline' "{
+    " vim-powerline让状态栏更酷
+    " 使用vundle安装出错, 手工安装:
+    " cd ~/.vim/bundle && git clone https://github.com/Lokaltog/vim-powerline
+"}
+
+Plugin 'vim-golang' "{
+    " golang官方插件
+    " 使用vundle找不到这个插件，所以手工安装
+    " 方法一: cd ~/.vim/bundle && git clone https://github.com/jnwhiteh/vim-golang.git
+    " 方法二: cp -r $GOROOT/misc/vim ~/.vim/bundle
+"}
+
+Plugin 'nerdtree' "{
+    " 文件浏览
+    " 手工安装: cd ~/.vim/bundle && git clone https://github.com/scrooloose/nerdtree.git
+    " 默认显示bookmarks
+    let NERDTreeShowBookmarks = 1
+    " 按F3打开文件导航窗口, 在导航窗口按q退出
+    map <silent> <F3> :NERDTreeToggle<cr>
+"}
+
+" vundle设置完之后需要写入下面这行
 filetype plugin indent on
-"let python_highlight_all = 1
+
+
+" ==========
+" 自定义函数
+" ==========
+
+" 删除末尾的空格
+func! DeleteTrailingWS()
+  exe "normal mz"
+  %s/\s\+$//ge
+  exe "normal `z"
+endfunc
+autocmd BufWrite *.py,*.t2t,*.sh,*.md,*.markdown,*.go :call DeleteTrailingWS()
+
+" 自动添加一些有用的信息
+autocmd BufNewFile *.sh,*.py exec ":call SetTitle()"
+func SetTitle()
+    if &filetype == 'sh'
+        call setline(1, "\#!/bin/sh")
+        call append(line("."), "\# Author: gaopenghigh<gaopenghigh@gmail.com>") 
+        call append(line(".")+1, "")
+        :8
+    elseif &filetype == 'python'
+        call setline(1, "\#!/usr/bin/python")
+        call append(line("."), "\# -*- coding: utf-8 -*-")
+        call append(line(".")+1, "\# Author: gaopenghigh<gaopenghigh@gmail.com>") 
+        call append(line(".")+2, "")
+        :8
+    endif
+endfunc
+
+" 运行这个文件(python, bash, lua, perl, go)
+" 写python或shell时经常需要运行正在编辑的文件做测试
+" 按下<F10>就用相应的解释器运行这个文件
+map <F10> :call AutoRun(input('argv : '))<cr>
+func AutoRun(par)
+    let par = a:par
+    exec "w"
+    if &filetype == 'sh'
+        let cmd = "!bash % ".par
+    elseif &filetype == 'python'
+        let cmd = "!python % ".par
+    elseif &filetype == 'perl'
+        let cmd = "!perl % ".par
+    elseif &filetype == 'lua'
+        let cmd = "!lua % ".par
+    elseif &filetype == 'go'
+        let cmd = "!go run % ".par
+    else
+        let cmd = "!echo nothing todo"
+    endif
+    exec cmd
+endfunc
+
