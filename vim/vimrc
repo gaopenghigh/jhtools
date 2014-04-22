@@ -136,14 +136,8 @@ set expandtab       " 使用空格代替tab, 输入:re可以把tab替换为空�
 set autoindent      " 自动缩进
 set smartindent     " Smart缩进
 
-"" 列数为80的地方高亮显示
-"if exists('+colorcolumn')
-"    set colorcolumn=80
-"else
-"    au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
-"endif
-"hi ColorColumn guibg=#2d2d2d ctermbg=246
-
+" 列数为80,120的地方高亮显示, 只支持vim7.3                                         
+let &colorcolumn="80,".join(range(120,999),",")
 
 
 " ==================
